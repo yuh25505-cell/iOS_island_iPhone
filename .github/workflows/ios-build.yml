@@ -41,15 +41,60 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             build
 
+      - name: 检查 App 是不是完整的
+        run: |
+          APP=build/Build/Products/Release-iphoneos/IslandPhone.app
+          echo "---- App 里的文件 ----"
+          ls -la "$APP"
+          du -sh "$APP"
+          test -f "$APP/Info.plist" || { echo "error: 没有 Info.plist"; exit 1; }
+          test -f "$APP/Assets.car" || { echo "error: 没有 Assets.car"; exit 1; }
+          EXE=$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$APP/Info.plist")
+          echo "可执行文件名：$EXE"
+          test -f "$APP/$EXE" || { echo "error: 找不到可执行文件 $EXE"; exit 1; }
+          file "$APP/$EXE"
+          file "$APP/$EXE" | grep -q "arm64" || { echo "error: 可执行文件不是 arm64"; exit 1; }
+          echo "---- Info.plist 关键项 ----"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$APP/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :MinimumOSVersion" "$APP/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleSupportedPlatforms" "$APP/Info.plist"
+
       - name: 打成 ipa（未签名）
         run: |
+          rm -rf out
           mkdir -p out/Payload
-          cp -R build/Build/Products/Release-iphoneos/IslandPhone.app out/Payload/
-          cd out && zip -qr IslandPhone-unsigned.ipa Payload
+          ditto build/Build/Products/Release-iphoneos/IslandPhone.app out/Payload/IslandPhone.app
+          cd out
+          zip -qry IslandPhone-unsigned.ipa Payload
+          echo "---- ipa 大小 ----"
+          ls -la IslandPhone-unsigned.ipa
+          shasum -a 256 IslandPhone-unsigned.ipa
 
-      - name: 上传
+      - name: 校验 ipa 能不能打开
+        run: |
+          cd out
+          unzip -tq IslandPhone-unsigned.ipa || { echo "error: ipa 压缩包本身是坏的"; exit 1; }
+          rm -rf check && mkdir check
+          unzip -q IslandPhone-unsigned.ipa -d check
+          test -f check/Payload/IslandPhone.app/Info.plist || { echo "error: 解压后找不到 Info.plist"; exit 1; }
+          echo "---- 解压测试通过，顶层内容 ----"
+          ls -la check/Payload
+          unzip -l IslandPhone-unsigned.ipa | head -n 15
+
+      - name: 上传 ipa
         uses: actions/upload-artifact@v4
         with:
           name: IslandPhone-unsigned-ipa
           path: out/IslandPhone-unsigned.ipa
           if-no-files-found: error
+          compression-level: 0
+
+      - name: 上传备用包（里面直接是 Payload，下载后把 zip 改名成 ipa 也能用）
+        uses: actions/upload-artifact@v4
+        with:
+          name: IslandPhone-backup-payload
+          path: out/Payload
+          if-no-files-found: error
+          compression-level: 0
