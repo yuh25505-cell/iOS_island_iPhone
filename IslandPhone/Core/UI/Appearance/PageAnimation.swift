@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct PageAnimationModifier<V: Equatable>: ViewModifier {
     let animation: Animation
@@ -20,5 +21,17 @@ extension View {
 enum PageAnimation {
     static var enabled: Bool {
         AppearanceStore.shared.pageAnimation
+    }
+
+    static var motionOn: Bool {
+        enabled && !UIAccessibility.isReduceMotionEnabled
+    }
+
+    static func perform(_ animation: Animation, _ body: () -> Void) {
+        if motionOn {
+            withAnimation(animation, body)
+        } else {
+            body()
+        }
     }
 }
