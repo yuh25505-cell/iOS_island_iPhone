@@ -1,14 +1,23 @@
 import SwiftUI
 
 struct RootView: View {
+    private let store = AppearanceStore.shared
+
     var body: some View {
-        ZStack {
-            Color(.systemBackground)
-                .ignoresSafeArea()
-            Text("岛屿机")
-                .font(.largeTitle.weight(.semibold))
-                .foregroundStyle(.primary)
+        IslandThemeProvider {
+            IslandDesktopTheme {
+                ZStack {
+                    IslandWallpaper(useCustom: true)
+                        .ignoresSafeArea()
+                    HStack(spacing: 18) {
+                        ForEach([AppId.chat, AppId.appearance, AppId.calendar, AppId.music], id: \.self) { app in
+                            AppIconWithLabel(app: app)
+                        }
+                    }
+                }
+            }
         }
+        .preferredColorScheme(store.themeMode.colorScheme)
     }
 }
 
