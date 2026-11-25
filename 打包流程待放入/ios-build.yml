@@ -1,0 +1,55 @@
+name: 打包 iOS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 选最新的 Xcode
+        run: |
+          ls -d /Applications/Xcode*.app || true
+          LATEST=$(ls -d /Applications/Xcode_[0-9]*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$LATEST" ]; then LATEST=/Applications/Xcode.app; fi
+          echo "使用：$LATEST"
+          sudo xcode-select -s "$LATEST/Contents/Developer"
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+
+      - name: 安装 XcodeGen
+        run: brew install xcodegen
+
+      - name: 生成工程
+        run: xcodegen generate
+
+      - name: 编译（不签名）
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project IslandPhone.xcodeproj \
+            -scheme IslandPhone \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: 打成 ipa（未签名）
+        run: |
+          mkdir -p out/Payload
+          cp -R build/Build/Products/Release-iphoneos/IslandPhone.app out/Payload/
+          cd out && zip -qr IslandPhone-unsigned.ipa Payload
+
+      - name: 上传
+        uses: actions/upload-artifact@v4
+        with:
+          name: IslandPhone-unsigned-ipa
+          path: out/IslandPhone-unsigned.ipa
+          if-no-files-found: error
