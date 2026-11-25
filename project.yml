@@ -8,8 +8,8 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.0"
-    MARKETING_VERSION: "0.5.0"
-    CURRENT_PROJECT_VERSION: "5"
+    MARKETING_VERSION: "0.5.1"
+    CURRENT_PROJECT_VERSION: "6"
 targets:
   IslandPhone:
     type: application
@@ -22,12 +22,20 @@ targets:
       - name: Make App Icon
         basedOnDependencyAnalysis: false
         script: |
+          ICON="$SRCROOT/IslandPhone/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png"
+          CUSTOM="$SRCROOT/Tools/AppIcon.png"
+          if [ -f "$CUSTOM" ]; then
+            TMP="$(mktemp -d)"
+            if sips -z 1024 1024 -s format jpeg "$CUSTOM" --out "$TMP/a.jpg" >/dev/null && sips -s format png "$TMP/a.jpg" --out "$ICON" >/dev/null; then
+              exit 0
+            fi
+          fi
           for PY in /usr/bin/python3 /opt/homebrew/bin/python3 /usr/local/bin/python3 python3; do
             if command -v "$PY" >/dev/null 2>&1; then
-              "$PY" "$SRCROOT/Tools/make_icon.py" "$SRCROOT/IslandPhone/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png" && exit 0
+              "$PY" "$SRCROOT/Tools/make_icon.py" "$ICON" && exit 0
             fi
           done
-          echo "error: python3 not found, cannot make app icon"
+          echo "error: cannot make app icon"
           exit 1
     settings:
       base:
