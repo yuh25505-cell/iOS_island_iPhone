@@ -8,8 +8,8 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.0"
-    MARKETING_VERSION: "0.4.0"
-    CURRENT_PROJECT_VERSION: "4"
+    MARKETING_VERSION: "0.5.0"
+    CURRENT_PROJECT_VERSION: "5"
 targets:
   IslandPhone:
     type: application
@@ -18,12 +18,25 @@ targets:
       - path: IslandPhone
         excludes:
           - "**/.gitkeep"
+    preBuildScripts:
+      - name: Make App Icon
+        basedOnDependencyAnalysis: false
+        script: |
+          for PY in /usr/bin/python3 /opt/homebrew/bin/python3 /usr/local/bin/python3 python3; do
+            if command -v "$PY" >/dev/null 2>&1; then
+              "$PY" "$SRCROOT/Tools/make_icon.py" "$SRCROOT/IslandPhone/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png" && exit 0
+            fi
+          done
+          echo "error: python3 not found, cannot make app icon"
+          exit 1
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.island.phone
         PRODUCT_NAME: IslandPhone
         GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleDisplayName: 岛屿机
+        INFOPLIST_KEY_CFBundleDisplayName: Island
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES

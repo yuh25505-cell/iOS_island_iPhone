@@ -4,8 +4,19 @@ struct WidgetContent: View {
     let kind: WidgetKind
 
     var body: some View {
-        GlassSurface(cornerRadius: 28, elevation: 8) {
-            Color.clear
+        switch kind {
+        case .clock:
+            ClockWidget()
+        case .battery:
+            BatteryWidget()
+        case .weather:
+            WidgetCard(value: "--°")
+        case .countdown:
+            WidgetCard(value: "--")
+        case .photocard:
+            PhotoCardWidget()
+        case .vinyl:
+            VinylWidget()
         }
     }
 }

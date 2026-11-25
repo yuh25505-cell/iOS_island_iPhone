@@ -19,6 +19,12 @@ struct HomeScreen: View {
             if state.openFolderId != nil {
                 FolderPopup(state: state)
             }
+            if state.photoCardOpen {
+                PhotoCardEditor(state: state)
+            }
+            if state.vinylOpen {
+                VinylEditor(state: state)
+            }
             AppLauncher(launcher: launcher)
         }
         .environment(\.launcher, launcher)

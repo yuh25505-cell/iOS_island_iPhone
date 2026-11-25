@@ -45,17 +45,35 @@ struct IslandTextField: View {
     private let text: Binding<String>
     private let size: CGFloat
     private let color: Color?
+    private let axis: Axis
+    private let maxLines: Int
 
-    init(_ placeholder: String, text: Binding<String>, size: CGFloat = 17, color: Color? = nil) {
+    init(
+        _ placeholder: String,
+        text: Binding<String>,
+        size: CGFloat = 17,
+        color: Color? = nil,
+        axis: Axis = .horizontal,
+        maxLines: Int = 3
+    ) {
         self.placeholder = placeholder
         self.text = text
         self.size = size
         self.color = color
+        self.axis = axis
+        self.maxLines = maxLines
     }
 
     var body: some View {
-        TextField(placeholder, text: text)
-            .font(AppearanceStore.shared.font(size: size))
-            .foregroundStyle(color ?? Color.primary)
+        if axis == .vertical {
+            TextField(placeholder, text: text, axis: .vertical)
+                .font(AppearanceStore.shared.font(size: size))
+                .foregroundStyle(color ?? Color.primary)
+                .lineLimit(1...max(maxLines, 1))
+        } else {
+            TextField(placeholder, text: text)
+                .font(AppearanceStore.shared.font(size: size))
+                .foregroundStyle(color ?? Color.primary)
+        }
     }
 }
