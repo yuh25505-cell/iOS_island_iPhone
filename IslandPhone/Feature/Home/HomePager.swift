@@ -94,7 +94,14 @@ struct HomePager: View {
     }
 
     private func handleTap(_ pos: CGPoint, width w: CGFloat) {
-        if !state.editing, widgetHit(state, page: page, pos: pos, width: w) != nil { return }
+        if !state.editing, let hit = widgetHit(state, page: page, pos: pos, width: w) {
+            if hit.kind == .photocard {
+                state.photoCardOpen = true
+            } else if hit.kind == .vinyl {
+                state.vinylOpen = true
+            }
+            return
+        }
         let cell = cellAt(pos, width: w)
         let index = state.itemIndexAt(page: page, row: cell.row, col: cell.col)
         var item: HomeItem?
